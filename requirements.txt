@@ -1,9 +1,27 @@
-functions-framework
-google-cloud-documentai
-google-generativeai
-requests
-flask
-google-auth
-google-api-python-client
-google-auth-httplib2
-google-auth-oauthlib
+# Google Cloud dependencies
+google-cloud-documentai>=2.20.1
+google-auth>=2.23.0
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=1.0.0
+
+# Gemini AI
+google-generativeai>=0.3.0
+
+# Cloud Functions framework
+functions-framework>=3.4.0
+
+# Web framework
+flask>=2.3.0
+
+# HTTP requests
+requests>=2.31.0
+
+# PDF processing (if needed)
+PyPDF2>=3.0.1
+
+# Data processing
+pandas>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0

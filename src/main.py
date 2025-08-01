@@ -12,6 +12,45 @@ from google.cloud import documentai_v1 as documentai
 from googleapiclient.discovery import build
 
 
+def find_next_empty_row(service, spreadsheet_id, sheet_name, start_column='A', end_column='G'):
+    """Find the next empty row in the sheet using smart detection - checks ALL columns A:G, places immediately after last used row"""
+    try:
+        # Get all values in the full range A:G to find the true last row with ANY data
+        range_name = f"'{sheet_name}'!{start_column}:{end_column}"
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        
+        # If no data at all, start at row 2 (assuming row 1 has headers)
+        if not values:
+            return 2
+        
+        # Find the true last row with data by checking ALL columns A:G
+        last_row_with_data = 0
+        for i, row in enumerate(values):
+            # Check if any cell in this row has data
+            if row and any(cell.strip() for cell in row if cell):
+                last_row_with_data = i + 1  # Convert to 1-based row number
+        
+        # If no data found in any row, start at row 2
+        if last_row_with_data == 0:
+            return 2
+        
+        # Return the row immediately after the last row with data (no gaps)
+        next_available_row = last_row_with_data + 1
+        
+        print(f"📍 Last row with data: {last_row_with_data}, next available row: {next_available_row}")
+        return next_available_row
+        
+    except Exception as e:
+        print(f"Could not determine next empty row, defaulting to append: {e}")
+        # If there's an error, fall back to regular append behavior
+        return None
+
+
 def process_with_gemini_first(pdf_content):
     """Try Gemini AI first for invoice processing"""
     
@@ -250,7 +289,7 @@ def process_invoice(request: Request):
         
         print(f"✅ Gemini processing successful: {len(rows)} items")
         
-        # Write to Google Sheets
+        # Write to Google Sheets with smart row detection
         try:
             spreadsheet_id = os.environ.get("GOOGLE_SHEETS_SPREADSHEET_ID")
             sheet_name = os.environ.get("GOOGLE_SHEETS_SHEET_NAME", "Sheet1")
@@ -259,17 +298,39 @@ def process_invoice(request: Request):
             service = build("sheets", "v4", credentials=credentials)
             sheet = service.spreadsheets()
 
-            result = (
-                sheet.values()
-                .append(
-                    spreadsheetId=spreadsheet_id,
-                    range=f"'{sheet_name}'!A:G",
-                    valueInputOption="USER_ENTERED",
-                    insertDataOption="INSERT_ROWS",
-                    body={"values": rows},
+            # Find the next empty row
+            next_row = find_next_empty_row(service, spreadsheet_id, sheet_name)
+            
+            if next_row:
+                # Use specific range starting from the next empty row
+                range_name = f"'{sheet_name}'!A{next_row}:G{next_row + len(rows) - 1}"
+                print(f"📍 Writing to specific range: {range_name}")
+                
+                # Use update instead of append for specific range
+                result = (
+                    sheet.values()
+                    .update(
+                        spreadsheetId=spreadsheet_id,
+                        range=range_name,
+                        valueInputOption="USER_ENTERED",
+                        body={"values": rows},
+                    )
+                    .execute()
                 )
-                .execute()
-            )
+            else:
+                # Fall back to append if we couldn't determine the next row
+                print("📍 Using standard append method")
+                result = (
+                    sheet.values()
+                    .append(
+                        spreadsheetId=spreadsheet_id,
+                        range=f"'{sheet_name}'!A:G",
+                        valueInputOption="USER_ENTERED",
+                        insertDataOption="INSERT_ROWS",
+                        body={"values": rows},
+                    )
+                    .execute()
+                )
 
             return jsonify({
                 "message": "Invoice processed successfully with Gemini AI",
@@ -495,23 +556,45 @@ def process_invoice(request: Request):
             200,
         )
 
-    # Step 7: Write to Google Sheets
+    # Step 7: Write to Google Sheets with smart row detection
     try:
         credentials, _ = default()
         service = build("sheets", "v4", credentials=credentials)
         sheet = service.spreadsheets()
 
-        result = (
-            sheet.values()
-            .append(
-                spreadsheetId=spreadsheet_id,
-                range=f"'{sheet_name}'!A:G",
-                valueInputOption="USER_ENTERED",
-                insertDataOption="INSERT_ROWS",
-                body={"values": rows},
+        # Find the next empty row
+        next_row = find_next_empty_row(service, spreadsheet_id, sheet_name)
+        
+        if next_row:
+            # Use specific range starting from the next empty row
+            range_name = f"'{sheet_name}'!A{next_row}:G{next_row + len(rows) - 1}"
+            print(f"📍 Writing to specific range: {range_name}")
+            
+            # Use update instead of append for specific range
+            result = (
+                sheet.values()
+                .update(
+                    spreadsheetId=spreadsheet_id,
+                    range=range_name,
+                    valueInputOption="USER_ENTERED",
+                    body={"values": rows},
+                )
+                .execute()
             )
-            .execute()
-        )
+        else:
+            # Fall back to append if we couldn't determine the next row
+            print("📍 Using standard append method")
+            result = (
+                sheet.values()
+                .append(
+                    spreadsheetId=spreadsheet_id,
+                    range=f"'{sheet_name}'!A:G",
+                    valueInputOption="USER_ENTERED",
+                    insertDataOption="INSERT_ROWS",
+                    body={"values": rows},
+                )
+                .execute()
+            )
 
         return (
             jsonify(

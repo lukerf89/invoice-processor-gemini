@@ -1,0 +1,34 @@
+{
+  "_template_info": "Google Sheets configuration template. Copy to sheets_config.json and customize.",
+  "spreadsheet_id": "your-google-sheets-id",
+  "sheets": {
+    "invoices": {
+      "name": "Invoices",
+      "columns": {
+        "A": "Invoice Number",
+        "B": "Vendor Name",
+        "C": "Invoice Date",
+        "D": "Due Date",
+        "E": "Total Amount",
+        "F": "Status",
+        "G": "Email Subject",
+        "H": "Email Sender",
+        "I": "Processing Date",
+        "J": "PDF Link/Name"
+      }
+    },
+    "line_items": {
+      "name": "Line Items",
+      "columns": {
+        "A": "Line Item ID",
+        "B": "Invoice Number",
+        "C": "Description",
+        "D": "Quantity",
+        "E": "Unit Price",
+        "F": "Line Total",
+        "G": "Vendor Name",
+        "H": "Invoice Date"
+      }
+    }
+  }
+}

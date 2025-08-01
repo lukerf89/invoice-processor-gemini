@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  invoice-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - GOOGLE_CLOUD_PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID}
+      - DOCUMENT_AI_PROCESSOR_ID=${DOCUMENT_AI_PROCESSOR_ID}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us}
+      - GOOGLE_SHEETS_SPREADSHEET_ID=${GOOGLE_SHEETS_SPREADSHEET_ID}
+      - GOOGLE_SHEETS_SHEET_NAME=${GOOGLE_SHEETS_SHEET_NAME:-Update 20230525}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - USE_GEMINI_FIRST=${USE_GEMINI_FIRST:-true}
+      - DEBUG_MODE=${DEBUG_MODE:-true}
+      - ENVIRONMENT=development
+    volumes:
+      # Mount configuration (create these first with setup.py)
+      - ./config/credentials.json:/app/config/credentials.json:ro
+      - ./config/app_config.json:/app/config/app_config.json:ro
+      - ./.env:/app/.env:ro
+
+      # Mount source code for development
+      - ./src:/app/src
+      - ./test_scripts:/app/test_scripts
+
+      # Mount test data and output directories
+      - ./test_invoices:/app/test_invoices
+      - ./debug_output:/app/debug_output
+
+    networks:
+      - invoice-net
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Redis for caching (if you want to add caching later)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - invoice-net
+    profiles:
+      - with-redis
+
+networks:
+  invoice-net:
+    driver: bridge
+
+volumes:
+  redis-data:

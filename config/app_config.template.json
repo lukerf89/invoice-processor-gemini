@@ -1,0 +1,18 @@
+{
+  "_template_info": "Application configuration template. Copy to app_config.json and customize.",
+  "gemini_model": "gemini-1.5-pro",
+  "max_retries": 3,
+  "timeout": 30,
+  "use_gemini_first": true,
+  "debug_mode": false,
+  "supported_vendors": [
+    "Creative-Coop",
+    "HarperCollins",
+    "OneHundred80"
+  ],
+  "sheets_config": {
+    "invoices_sheet": "Invoices",
+    "line_items_sheet": "Line Items",
+    "start_row": 2
+  }
+}

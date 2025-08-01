@@ -51,3 +51,57 @@ test_invoices/
 
 # Development/debug files (now in test_scripts/)
 test_scripts/
+
+
+# Added by setup.py
+# Sensitive configuration files
+config/credentials.json
+config/app_config.json
+config/sheets_config.json
+.env
+*.key
+*.pem
+
+# Development files
+.vscode/settings.json
+.idea/workspace.xml
+*.log
+debug_output/
+temp_files/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+venv/
+env/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Project-specific
+test_invoices/processed/
+output_debug/
+
+# Keep templates
+!config/*.template.*
+!.env.template
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
