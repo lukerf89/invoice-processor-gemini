@@ -1,9 +1,9 @@
 functions-framework
 google-cloud-documentai
-google-generativeai
 requests
 flask
 google-auth
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+google-generativeai>=0.3.0
