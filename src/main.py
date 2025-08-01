@@ -153,7 +153,7 @@ Extract from this invoice:"""
                 vendor, 
                 invoice_number,
                 item.get('item', ''),
-                item.get('wholesale', ''),
+                clean_price(item.get('wholesale', '')),  # Format price consistently
                 item.get('qty_ordered', '')
             ])
         
@@ -1762,8 +1762,8 @@ def split_rifle_paper_line_item(full_line_text, entity, document_text=None):
         else:
             full_description = code
 
-        # Format price with dollar sign
-        formatted_price = f"${price}"
+        # Format price consistently  
+        formatted_price = clean_price(price)
 
         items.append(
             {
@@ -2169,11 +2169,8 @@ def process_harpercollins_document(document):
             # Format exactly like expected: ISBN - Title
             description = f"{isbn} - {title}"
 
-            # Format price with proper decimals
-            if wholesale_price == int(wholesale_price):
-                price_str = str(int(wholesale_price))
-            else:
-                price_str = f"{wholesale_price:.3f}"
+            # Format price consistently
+            price_str = clean_price(wholesale_price)
 
             rows.append(
                 [

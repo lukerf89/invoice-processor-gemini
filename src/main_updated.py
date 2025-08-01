@@ -15,6 +15,23 @@ from utils.validation import EnvironmentValidator
 from processors.gemini_processor import GeminiProcessor
 from processors.document_ai_processor import DocumentAIProcessor
 
+
+def format_price(value):
+    """Format price to $00.00 format consistently"""
+    if not value:
+        return ""
+    
+    # Extract numeric value from string
+    numeric_price = re.sub(r"[^0-9.-]", "", str(value))
+    if numeric_price:
+        try:
+            # Convert to float and format as currency with proper $00.00 format
+            price_float = float(numeric_price)
+            return f"${price_float:.2f}"
+        except ValueError:
+            return ""
+    return ""
+
 # Initialize configuration
 config = ConfigLoader()
 
@@ -118,10 +135,8 @@ class InvoiceProcessor:
             # Build item description
             item_desc = item.get('description', '')
             
-            # Extract wholesale price
-            wholesale = str(item.get('unit_price', ''))
-            if wholesale:
-                wholesale = wholesale.replace('$', '').replace(',', '')
+            # Extract wholesale price and format consistently
+            wholesale = format_price(item.get('unit_price', ''))
             
             # Extract quantity
             qty = str(item.get('quantity', ''))
@@ -289,8 +304,7 @@ def extract_line_items_from_entities(document, invoice_date, vendor, invoice_num
                 elif prop.type_ == "line_item/quantity":
                     line_item_data['quantity'] = prop.mention_text
                 elif prop.type_ == "line_item/unit_price":
-                    price_text = prop.mention_text.replace('$', '').replace(',', '').strip()
-                    line_item_data['unit_price'] = price_text
+                    line_item_data['unit_price'] = format_price(prop.mention_text)
             
             # Build consolidated item description
             item_parts = []
@@ -354,10 +368,8 @@ def extract_line_items(document, invoice_date, vendor, invoice_number):
                 if row_data.get('description'):
                     item_parts.append(row_data['description'])
                 
-                # Extract and clean price
-                price = row_data.get('price', '')
-                if price:
-                    price = price.replace('$', '').replace(',', '').strip()
+                # Extract and format price
+                price = format_price(row_data.get('price', ''))
                 
                 # Add row if we have meaningful data
                 if item_parts and (row_data.get('quantity') or price):
@@ -405,7 +417,7 @@ def extract_line_items_from_text(text, invoice_date, vendor, invoice_number):
                     code = groups[0]
                     desc = groups[1]
                     qty = groups[2]
-                    price = groups[3].replace(',', '')
+                    price = format_price(groups[3])
                     
                     # Build item description
                     item = f"{code} - {desc}" if code != desc else desc
