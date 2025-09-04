@@ -108,6 +108,15 @@ Extract from this invoice:"""
         invoice_number = gemini_result.get('invoice_number', '')
         
         for item in line_items:
+            # Clean quantity to ensure it's a plain integer string
+            qty = item.get('qty_ordered', '')
+            if qty:
+                try:
+                    qty_num = float(qty)
+                    qty = str(int(qty_num)) if qty_num == int(qty_num) else str(qty_num)
+                except:
+                    pass  # Keep original if conversion fails
+            
             rows.append([
                 "",  # Column A placeholder
                 order_date,
@@ -115,7 +124,7 @@ Extract from this invoice:"""
                 invoice_number,
                 item.get('item', ''),
                 item.get('wholesale', ''),
-                item.get('qty_ordered', '')
+                qty
             ])
         
         print(f"✅ Gemini successfully extracted {len(rows)} line items")
